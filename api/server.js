@@ -27,19 +27,21 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet({
-    crossOriginOpenerPolicy: false,
-    crossOriginResourcePolicy: false,
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'"],
+app.use(
+    helmet({
+        crossOriginOpenerPolicy: false,
+        crossOriginResourcePolicy: false,
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'"],
+            },
         },
-    },
-}));
+    })
+);
 app.use(
     cors({
         origin: process.env.FRONTEND_URL || "*",
