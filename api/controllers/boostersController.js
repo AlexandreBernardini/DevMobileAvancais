@@ -335,8 +335,10 @@ const getUserBoosters = async (req, res, next) => {
                             id: true,
                             name: true,
                             description: true,
-                            imageUrl: true,
+                            setIcon: true,        // Using setIcon instead of imageUrl
                             releaseDate: true,
+                            code: true,
+                            theme: true,
                         },
                     },
                 },
