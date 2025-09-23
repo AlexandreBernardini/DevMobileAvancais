@@ -76,7 +76,11 @@ const swaggerOptions = {
         servers: [
             {
                 url: `http://localhost:${PORT}/api`,
-                description: "Development server",
+                description: "Development server (local)",
+            },
+            {
+                url: `http://172.233.255.18:${PORT}/api`,
+                description: "Development server (remote)",
             },
         ],
         components: {
@@ -94,7 +98,7 @@ const swaggerOptions = {
             },
         ],
     },
-    apis: ["./routes/*.js", "./models/*.js"],
+    apis: ["/app/routes/*.js", "/app/controllers/*.js"],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
