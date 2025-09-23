@@ -13,7 +13,7 @@ const { authenticate } = require("../middleware/auth");
  *       200:
  *         description: Booster packs retrieved successfully
  */
-router.get("/", boostersController.getBoosterPacks);
+router.get("/", authenticate, boostersController.getUserBoosters);
 
 /**
  * @swagger
@@ -36,7 +36,7 @@ router.get("/", boostersController.getBoosterPacks);
 router.post(
     "/:id/purchase",
     authenticate,
-    boostersController.purchaseBoosterPack
+    boostersController.purchaseBoosters
 );
 
 module.exports = router;
