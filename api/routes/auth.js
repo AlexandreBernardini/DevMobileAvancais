@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
 const authController = require("../controllers/authController");
+const { authenticate } = require("../middleware/auth");
 const {
     validate,
     registerSchema,
@@ -212,6 +213,6 @@ router.post("/logout", authController.logout);
  *       401:
  *         description: Unauthorized
  */
-router.get("/me", authController.getProfile);
+router.get("/me", authenticate, authController.getProfile);
 
 module.exports = router;

@@ -7,6 +7,7 @@ const prisma = require("../config/database");
 const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
+        console.log("Auth header:", authHeader);
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
@@ -15,9 +16,11 @@ const authenticate = async (req, res, next) => {
         }
 
         const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+        console.log("Token extracted:", token.substring(0, 50) + "...");
 
         // Verify the token
         const decoded = verifyAccessToken(token);
+        console.log("Token decoded:", decoded);
 
         // Check if user still exists and is active
         const user = await prisma.user.findUnique({
@@ -34,6 +37,8 @@ const authenticate = async (req, res, next) => {
             },
         });
 
+        console.log("User found:", user);
+
         if (!user) {
             return res.status(401).json({
                 error: "Invalid token. User not found or inactive.",
@@ -42,8 +47,10 @@ const authenticate = async (req, res, next) => {
 
         // Add user info to request object
         req.user = user;
+        console.log("req.user set:", req.user);
         next();
     } catch (error) {
+        console.error("Auth middleware error:", error);
         return res.status(401).json({
             error: "Invalid token.",
             details: error.message,
