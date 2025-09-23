@@ -315,13 +315,13 @@ const getUserBoosters = async (req, res, next) => {
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
 
-        const where = { 
+        const where = {
             isActive: true,
             availableFrom: { lte: new Date() },
             OR: [
                 { availableUntil: null },
-                { availableUntil: { gte: new Date() } }
-            ]
+                { availableUntil: { gte: new Date() } },
+            ],
         };
 
         if (setId) where.setId = setId;
