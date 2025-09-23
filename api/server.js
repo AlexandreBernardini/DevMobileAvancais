@@ -27,11 +27,23 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+        },
+    },
+}));
 app.use(
     cors({
         origin: process.env.FRONTEND_URL || "*",
         credentials: true,
+        optionsSuccessStatus: 200,
     })
 );
 
@@ -104,26 +116,22 @@ const swaggerOptions = {
 const specs = swaggerJsdoc(swaggerOptions);
 
 // Debug: Log the specs to see if they're being generated
-console.log('Swagger specs generated:', Object.keys(specs));
-console.log('Number of paths found:', Object.keys(specs.paths || {}).length);
+console.log("Swagger specs generated:", Object.keys(specs));
+console.log("Number of paths found:", Object.keys(specs.paths || {}).length);
 
-// Swagger UI options
-const swaggerUiOptions = {
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "TCG Mobile API Documentation",
-    swaggerOptions: {
-        url: '/api-docs.json',
-    }
-};
-
+// Swagger documentation routes
 app.get("/api-docs.json", (req, res) => {
     res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.send(specs);
 });
 
-app.use("/api-docs", swaggerUi.serve);
-app.get("/api-docs", swaggerUi.setup(specs, { explorer: true }));
+// Simple Swagger UI setup
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "TCG Mobile API Documentation"
+}));
 
 // Health check
 app.get("/health", (req, res) => {
