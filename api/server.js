@@ -114,7 +114,7 @@ app.get("/api/health", (req, res) => {
         status: "OK",
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV || "development",
-        service: "TCG Mobile API"
+        service: "TCG Mobile API",
     });
 });
 

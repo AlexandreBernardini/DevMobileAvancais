@@ -4,10 +4,10 @@ Ce guide vous explique comment dockeriser et déployer l'API TCG Mobile avec Pos
 
 ## 📋 Prérequis
 
-- **Docker Desktop** installé sur votre machine
-- **Docker Compose** (inclus avec Docker Desktop)
-- **Git** pour cloner le projet
-- Au moins **4GB de RAM** disponible pour les conteneurs
+-   **Docker Desktop** installé sur votre machine
+-   **Docker Compose** (inclus avec Docker Desktop)
+-   **Git** pour cloner le projet
+-   Au moins **4GB de RAM** disponible pour les conteneurs
 
 ## 🏗️ Architecture Docker
 
@@ -37,6 +37,7 @@ Ce guide vous explique comment dockeriser et déployer l'API TCG Mobile avec Pos
 ### Option 1: Utilisation des scripts automatiques
 
 #### Sur Windows:
+
 ```powershell
 # Setup développement
 .\docker-setup.bat setup dev
@@ -46,6 +47,7 @@ Ce guide vous explique comment dockeriser et déployer l'API TCG Mobile avec Pos
 ```
 
 #### Sur Linux/Mac:
+
 ```bash
 # Rendre le script exécutable
 chmod +x docker-setup.sh
@@ -60,6 +62,7 @@ chmod +x docker-setup.sh
 ### Option 2: Commandes manuelles
 
 #### Développement:
+
 ```bash
 # 1. Copier le fichier d'environnement
 cp .env.example .env
@@ -81,6 +84,7 @@ docker-compose -f docker-compose.dev.yml exec api npm run prisma:seed
 ```
 
 #### Production:
+
 ```bash
 # 1. Copier et configurer l'environnement
 cp .env.example .env
@@ -140,16 +144,18 @@ RATE_LIMIT_MAX_REQUESTS=100
 ### Services Disponibles
 
 #### Développement (`docker-compose.dev.yml`):
-- **API**: `http://localhost:3000`
-- **PostgreSQL**: `localhost:5433`
-- **Volumes montés** pour le hot-reload
+
+-   **API**: `http://localhost:3000`
+-   **PostgreSQL**: `localhost:5433`
+-   **Volumes montés** pour le hot-reload
 
 #### Production (`docker-compose.yml`):
-- **API**: `http://localhost:3000`
-- **Nginx**: `http://localhost:80`
-- **PostgreSQL**: Interne au réseau Docker
-- **Redis**: Cache optionnel
-- **Volumes persistants**
+
+-   **API**: `http://localhost:3000`
+-   **Nginx**: `http://localhost:80`
+-   **PostgreSQL**: Interne au réseau Docker
+-   **Redis**: Cache optionnel
+-   **Volumes persistants**
 
 ## 📊 Gestion et Monitoring
 
@@ -182,8 +188,9 @@ docker-compose exec -T postgres psql -U tcg_user -d tcg_mobile < backup.sql
 ### Health Checks
 
 L'API inclut des endpoints de santé:
-- `GET /health` - Health check simple
-- `GET /api/health` - Health check API avec métadonnées
+
+-   `GET /health` - Health check simple
+-   `GET /api/health` - Health check API avec métadonnées
 
 ### Monitoring des Conteneurs
 
@@ -212,10 +219,11 @@ docker inspect tcg-api
 ### Nginx Configuration
 
 Le fichier `docker/nginx/nginx.conf` inclut:
-- Rate limiting
-- Headers de sécurité
-- Proxy vers l'API
-- Configuration SSL (commentée)
+
+-   Rate limiting
+-   Headers de sécurité
+-   Proxy vers l'API
+-   Configuration SSL (commentée)
 
 ## 🔄 Déploiement
 
@@ -254,20 +262,20 @@ docker-compose exec api npx prisma migrate deploy
 name: Deploy to Production
 
 on:
-  push:
-    branches: [ main ]
+    push:
+        branches: [main]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy to server
-        run: |
-          ssh user@server 'cd /path/to/app && git pull'
-          ssh user@server 'cd /path/to/app && docker-compose build'
-          ssh user@server 'cd /path/to/app && docker-compose up -d'
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Deploy to server
+              run: |
+                  ssh user@server 'cd /path/to/app && git pull'
+                  ssh user@server 'cd /path/to/app && docker-compose build'
+                  ssh user@server 'cd /path/to/app && docker-compose up -d'
 ```
 
 ## 🐛 Troubleshooting
@@ -275,42 +283,45 @@ jobs:
 ### Problèmes Courants
 
 1. **Port déjà utilisé**:
-   ```bash
-   # Vérifier les ports utilisés
-   netstat -tulpn | grep :3000
-   
-   # Changer le port dans docker-compose.yml
-   ports:
-     - "3001:3000"  # Utiliser le port 3001
-   ```
+
+    ```bash
+    # Vérifier les ports utilisés
+    netstat -tulpn | grep :3000
+
+    # Changer le port dans docker-compose.yml
+    ports:
+      - "3001:3000"  # Utiliser le port 3001
+    ```
 
 2. **Base de données non accessible**:
-   ```bash
-   # Vérifier le statut
-   docker-compose ps
-   
-   # Vérifier les logs
-   docker-compose logs postgres
-   
-   # Redémarrer la base
-   docker-compose restart postgres
-   ```
+
+    ```bash
+    # Vérifier le statut
+    docker-compose ps
+
+    # Vérifier les logs
+    docker-compose logs postgres
+
+    # Redémarrer la base
+    docker-compose restart postgres
+    ```
 
 3. **Migrations échouées**:
-   ```bash
-   # Reset de la base (ATTENTION: supprime les données)
-   docker-compose exec api npx prisma migrate reset
-   
-   # Forcer les migrations
-   docker-compose exec api npx prisma db push
-   ```
+
+    ```bash
+    # Reset de la base (ATTENTION: supprime les données)
+    docker-compose exec api npx prisma migrate reset
+
+    # Forcer les migrations
+    docker-compose exec api npx prisma db push
+    ```
 
 4. **Problèmes de permissions**:
-   ```bash
-   # Linux/Mac: Corriger les permissions
-   sudo chown -R $USER:$USER ./uploads
-   chmod -R 755 ./uploads
-   ```
+    ```bash
+    # Linux/Mac: Corriger les permissions
+    sudo chown -R $USER:$USER ./uploads
+    chmod -R 755 ./uploads
+    ```
 
 ### Logs et Debug
 

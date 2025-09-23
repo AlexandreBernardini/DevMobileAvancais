@@ -1,55 +1,55 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: tcg-postgres-dev
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: tcg_mobile_dev
-      POSTGRES_USER: tcg_user
-      POSTGRES_PASSWORD: tcg_dev_password
-    volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-    networks:
-      - tcg-dev-network
+    # PostgreSQL Database
+    postgres:
+        image: postgres:15-alpine
+        container_name: tcg-postgres-dev
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: tcg_mobile_dev
+            POSTGRES_USER: tcg_user
+            POSTGRES_PASSWORD: tcg_dev_password
+        volumes:
+            - postgres_dev_data:/var/lib/postgresql/data
+        ports:
+            - "5433:5432"
+        networks:
+            - tcg-dev-network
 
-  # TCG API Application (Development)
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: tcg-api-dev
-    restart: unless-stopped
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DATABASE_URL: postgresql://tcg_user:tcg_dev_password@postgres:5432/tcg_mobile_dev?schema=public
-      JWT_SECRET: dev-jwt-secret-key
-      JWT_EXPIRES_IN: 1d
-      JWT_REFRESH_SECRET: dev-refresh-secret-key
-      JWT_REFRESH_EXPIRES_IN: 7d
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - api_dev_uploads:/app/uploads
-    ports:
-      - "3000:3000"
-      - "9229:9229" # Debug port
-    depends_on:
-      - postgres
-    networks:
-      - tcg-dev-network
+    # TCG API Application (Development)
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
+        container_name: tcg-api-dev
+        restart: unless-stopped
+        environment:
+            NODE_ENV: development
+            PORT: 3000
+            DATABASE_URL: postgresql://tcg_user:tcg_dev_password@postgres:5432/tcg_mobile_dev?schema=public
+            JWT_SECRET: dev-jwt-secret-key
+            JWT_EXPIRES_IN: 1d
+            JWT_REFRESH_SECRET: dev-refresh-secret-key
+            JWT_REFRESH_EXPIRES_IN: 7d
+        volumes:
+            - .:/app
+            - /app/node_modules
+            - api_dev_uploads:/app/uploads
+        ports:
+            - "3000:3000"
+            - "9229:9229" # Debug port
+        depends_on:
+            - postgres
+        networks:
+            - tcg-dev-network
 
 volumes:
-  postgres_dev_data:
-    driver: local
-  api_dev_uploads:
-    driver: local
+    postgres_dev_data:
+        driver: local
+    api_dev_uploads:
+        driver: local
 
 networks:
-  tcg-dev-network:
-    driver: bridge
+    tcg-dev-network:
+        driver: bridge
