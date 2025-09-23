@@ -1,0 +1,649 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rarity {
+  Common
+  Uncommon
+  Rare
+  Epic
+  Legendary
+  Mythic
+}
+
+enum Element {
+  Fire
+  Water
+  Earth
+  Air
+  Lightning
+  Dark
+  Light
+  Neutral
+}
+
+enum CharacterClass {
+  Warrior
+  Mage
+  Archer
+  Assassin
+  Healer
+  Tank
+  Support
+}
+
+enum AbilityType {
+  Attack
+  Defense
+  Heal
+  Buff
+  Debuff
+  Special
+}
+
+enum League {
+  Bronze
+  Silver
+  Gold
+  Platinum
+  Diamond
+  Master
+  Grandmaster
+}
+
+enum UserRole {
+  user
+  moderator
+  admin
+}
+
+enum GameState {
+  waiting
+  in_progress
+  finished
+  abandoned
+}
+
+enum GameMode {
+  ranked
+  casual
+  friendly
+  tournament
+}
+
+enum Format {
+  Standard
+  Classic
+  Limited
+  Custom
+}
+
+enum TournamentType {
+  single_elimination
+  double_elimination
+  round_robin
+  swiss
+}
+
+enum TournamentStatus {
+  registration
+  in_progress
+  completed
+  cancelled
+}
+
+enum TradeStatus {
+  pending
+  accepted
+  declined
+  cancelled
+  completed
+  expired
+}
+
+enum PackType {
+  Standard
+  Premium
+  Elite
+  Legendary
+}
+
+model User {
+  id          String  @id @default(cuid())
+  username    String  @unique
+  email       String  @unique
+  password    String
+  displayName String?
+  avatar      String?
+  level       Int     @default(1)
+  experience  Int     @default(0)
+  title       String  @default("Novice Collector")
+  bio         String?
+
+  // Game Stats
+  totalGamesPlayed Int    @default(0)
+  wins             Int    @default(0)
+  losses           Int    @default(0)
+  winRate          Float  @default(0)
+  currentStreak    Int    @default(0)
+  bestStreak       Int    @default(0)
+  ranking          Int    @default(1000)
+  league           League @default(Bronze)
+
+  // Collection Stats
+  totalCards  Int @default(0)
+  uniqueCards Int @default(0)
+
+  // Currency
+  coins Int @default(100)
+  gems  Int @default(10)
+  dust  Int @default(0)
+
+  // Settings
+  showProfile          Boolean @default(true)
+  showCollection       Boolean @default(true)
+  allowFriendRequests  Boolean @default(true)
+  notificationsEnabled Boolean @default(true)
+
+  // System
+  lastLogin     DateTime @default(now())
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  role          UserRole @default(user)
+  refreshToken  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userCards            UserCard[]
+  decks                Deck[]
+  gamesAsPlayer1       Game[]                  @relation("Player1Games")
+  gamesAsPlayer2       Game[]                  @relation("Player2Games")
+  wonGames             Game[]                  @relation("WinnerGames")
+  tournaments          TournamentParticipant[]
+  organizedTournaments Tournament[]            @relation("TournamentOrganizer")
+  initiatedTrades      Trade[]                 @relation("TradeInitiator")
+  receivedTrades       Trade[]                 @relation("TradeRecipient")
+  friends              Friendship[]            @relation("UserFriends")
+  friendOf             Friendship[]            @relation("FriendOfUser")
+  completedSets        UserCompletedSet[]
+  favoriteCharacters   UserFavoriteCharacter[]
+
+  @@map("users")
+}
+
+model Set {
+  id            String    @id @default(cuid())
+  name          String
+  code          String    @unique
+  description   String
+  theme         String
+  totalCards    Int
+  setIcon       String
+  setSymbol     String
+  backgroundArt String?
+  releaseDate   DateTime
+  isActive      Boolean   @default(true)
+  isLimited     Boolean   @default(false)
+  endDate       DateTime?
+  boosterPrice  Int
+  cardsPerPack  Int       @default(5)
+
+  // Rarity Distribution
+  commonCount    Int @default(0)
+  uncommonCount  Int @default(0)
+  rareCount      Int @default(0)
+  epicCount      Int @default(0)
+  legendaryCount Int @default(0)
+  mythicCount    Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  characters        Character[]
+  boosterPacks      BoosterPack[]
+  userCompletedSets UserCompletedSet[]
+
+  @@map("sets")
+}
+
+model Character {
+  id             String         @id @default(cuid())
+  name           String
+  title          String?
+  description    String
+  rarity         Rarity
+  element        Element
+  characterClass CharacterClass
+
+  // Stats
+  health   Int @db.SmallInt
+  attack   Int @db.SmallInt
+  defense  Int @db.SmallInt
+  speed    Int @db.SmallInt
+  manaCost Int @db.SmallInt
+
+  // Artwork
+  cardImage   String
+  fullArtwork String?
+
+  lore           String?
+  cardNumber     String
+  isEvolution    Boolean  @default(false)
+  evolutionLevel Int      @default(1)
+  tags           String[]
+  isActive       Boolean  @default(true)
+  releaseDate    DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  set                Set                     @relation(fields: [setId], references: [id])
+  setId              String
+  evolutionFrom      Character?              @relation("CharacterEvolution", fields: [evolutionFromId], references: [id])
+  evolutionFromId    String?
+  evolutions         Character[]             @relation("CharacterEvolution")
+  abilities          Ability[]
+  evolutionMaterials EvolutionMaterial[]
+  userCards          UserCard[]
+  deckCards          DeckCard[]
+  favoriteByUsers    UserFavoriteCharacter[]
+  TradeCard          TradeCard[]
+
+  @@map("characters")
+}
+
+model Ability {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  damage      Int         @default(0)
+  type        AbilityType
+
+  // Relations
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@map("abilities")
+}
+
+model EvolutionMaterial {
+  id       String @id @default(cuid())
+  item     String
+  quantity Int
+
+  // Relations
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@map("evolution_materials")
+}
+
+model UserCard {
+  id           String    @id @default(cuid())
+  quantity     Int       @default(1)
+  condition    String    @default("Mint")
+  foil         Boolean   @default(false)
+  level        Int       @default(1)
+  experience   Int       @default(0)
+  isLocked     Boolean   @default(false)
+  isFavorite   Boolean   @default(false)
+  obtainedFrom String
+  obtainedAt   DateTime  @default(now())
+  lastUsed     DateTime?
+  timesUsed    Int       @default(0)
+  tradeable    Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String
+
+  @@unique([userId, characterId])
+  @@map("user_cards")
+}
+
+model Deck {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  format      Format    @default(Standard)
+  mainElement Element
+  strategy    String
+  isPublic    Boolean   @default(false)
+  isActive    Boolean   @default(true)
+  wins        Int       @default(0)
+  losses      Int       @default(0)
+  winRate     Float     @default(0)
+  lastUsed    DateTime?
+  tags        String[]
+  likes       Int       @default(0)
+  copies      Int       @default(0)
+  version     Int       @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  owner                  User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId                String
+  cards                  DeckCard[]
+  gamesAsPlayer1Deck     Game[]                  @relation("Player1DeckGames")
+  gamesAsPlayer2Deck     Game[]                  @relation("Player2DeckGames")
+  tournamentParticipants TournamentParticipant[]
+
+  @@map("decks")
+}
+
+model DeckCard {
+  id       String @id @default(cuid())
+  quantity Int    @default(1)
+
+  // Relations
+  deck        Deck      @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  deckId      String
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String
+
+  @@unique([deckId, characterId])
+  @@map("deck_cards")
+}
+
+model Game {
+  id            String    @id @default(cuid())
+  gameId        String    @unique
+  gameState     GameState @default(waiting)
+  currentTurn   Int       @default(1)
+  currentPlayer Int       @default(1)
+  turnCount     Int       @default(1)
+  maxTurns      Int       @default(50)
+  gameMode      GameMode
+  format        Format
+  winCondition  String?
+
+  // Player 1
+  player1Health  Int @default(100)
+  player1Mana    Int @default(1)
+  player1MaxMana Int @default(1)
+
+  // Player 2
+  player2Health  Int @default(100)
+  player2Mana    Int @default(1)
+  player2MaxMana Int @default(1)
+
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  duration  Int? // in seconds
+  isRanked  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  player1       User   @relation("Player1Games", fields: [player1Id], references: [id])
+  player1Id     String
+  player1Deck   Deck   @relation("Player1DeckGames", fields: [player1DeckId], references: [id])
+  player1DeckId String
+
+  player2       User   @relation("Player2Games", fields: [player2Id], references: [id])
+  player2Id     String
+  player2Deck   Deck   @relation("Player2DeckGames", fields: [player2DeckId], references: [id])
+  player2DeckId String
+
+  winner   User?   @relation("WinnerGames", fields: [winnerId], references: [id])
+  winnerId String?
+
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  tournamentId String?
+
+  actions GameAction[]
+
+  @@map("games")
+}
+
+model GameAction {
+  id         String   @id @default(cuid())
+  player     Int
+  turn       Int
+  actionType String
+  details    Json
+  timestamp  DateTime @default(now())
+
+  // Relations
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId String
+
+  @@map("game_actions")
+}
+
+model Tournament {
+  id                String           @id @default(cuid())
+  name              String
+  description       String
+  format            Format
+  tournamentType    TournamentType
+  maxParticipants   Int
+  entryFeeCoins     Int              @default(0)
+  entryFeeGems      Int              @default(0)
+  status            TournamentStatus @default(registration)
+  registrationStart DateTime
+  registrationEnd   DateTime
+  startTime         DateTime
+  endTime           DateTime?
+  currentRound      Int              @default(0)
+  totalRounds       Int?
+  banner            String?
+  isPublic          Boolean          @default(true)
+  allowSpectators   Boolean          @default(true)
+  streamUrl         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  organizer    User                    @relation("TournamentOrganizer", fields: [organizerId], references: [id])
+  organizerId  String
+  participants TournamentParticipant[]
+  matches      TournamentMatch[]
+  prizes       TournamentPrize[]
+  games        Game[]
+
+  @@map("tournaments")
+}
+
+model TournamentParticipant {
+  id               String   @id @default(cuid())
+  registrationTime DateTime @default(now())
+  seed             Int?
+  isActive         Boolean  @default(true)
+
+  // Relations
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournamentId String
+  user         User       @relation(fields: [userId], references: [id])
+  userId       String
+  deck         Deck       @relation(fields: [deckId], references: [id])
+  deckId       String
+
+  @@unique([tournamentId, userId])
+  @@map("tournament_participants")
+}
+
+model TournamentMatch {
+  id            String    @id @default(cuid())
+  round         Int
+  matchNumber   Int
+  status        String    @default("pending")
+  scheduledTime DateTime?
+  winnerId      String?
+
+  // Relations
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournamentId String
+
+  @@map("tournament_matches")
+}
+
+model TournamentPrize {
+  id          String  @id @default(cuid())
+  position    Int
+  rewardCoins Int     @default(0)
+  rewardGems  Int     @default(0)
+  rewardPacks Int     @default(0)
+  title       String?
+
+  // Relations
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  tournamentId String
+
+  @@map("tournament_prizes")
+}
+
+model Trade {
+  id              String      @id @default(cuid())
+  tradeId         String      @unique
+  status          TradeStatus @default(pending)
+  message         String?
+  responseMessage String?
+  expirationDate  DateTime
+  completedAt     DateTime?
+  tradeType       String      @default("direct")
+  isPublic        Boolean     @default(false)
+  viewCount       Int         @default(0)
+
+  // Initiator Offer
+  initiatorCoins Int @default(0)
+  initiatorGems  Int @default(0)
+
+  // Recipient Offer
+  recipientCoins Int @default(0)
+  recipientGems  Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  initiator      User        @relation("TradeInitiator", fields: [initiatorId], references: [id])
+  initiatorId    String
+  recipient      User        @relation("TradeRecipient", fields: [recipientId], references: [id])
+  recipientId    String
+  initiatorCards TradeCard[] @relation("InitiatorTradeCards")
+  recipientCards TradeCard[] @relation("RecipientTradeCards")
+
+  @@map("trades")
+}
+
+model TradeCard {
+  id              String  @id @default(cuid())
+  quantity        Int
+  isInitiatorCard Boolean
+
+  // Relations
+  trade          Trade     @relation("InitiatorTradeCards", fields: [tradeId], references: [id], onDelete: Cascade)
+  tradeRecipient Trade?    @relation("RecipientTradeCards", fields: [tradeId], references: [id], onDelete: Cascade)
+  tradeId        String
+  character      Character @relation(fields: [characterId], references: [id])
+  characterId    String
+
+  @@map("trade_cards")
+}
+
+model BoosterPack {
+  id                String    @id @default(cuid())
+  packId            String    @unique
+  packType          PackType  @default(Standard)
+  priceCoins        Int
+  priceGems         Int       @default(0)
+  cardsCount        Int
+  foilChance        Float     @default(10.0)
+  bonusCardChance   Float     @default(5.0)
+  guaranteedElement Element?
+  packImage         String
+  openingAnimation  String?
+  isActive          Boolean   @default(true)
+  isLimited         Boolean   @default(false)
+  limitedQuantity   Int?
+  soldCount         Int       @default(0)
+  availableFrom     DateTime  @default(now())
+  availableUntil    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  set                Set                @relation(fields: [setId], references: [id])
+  setId              String
+  guaranteedRarities GuaranteedRarity[]
+
+  @@map("booster_packs")
+}
+
+model GuaranteedRarity {
+  id       String @id @default(cuid())
+  rarity   Rarity
+  quantity Int
+
+  // Relations
+  boosterPack   BoosterPack @relation(fields: [boosterPackId], references: [id], onDelete: Cascade)
+  boosterPackId String
+
+  @@map("guaranteed_rarities")
+}
+
+model Friendship {
+  id      String   @id @default(cuid())
+  status  String   @default("pending") // pending, accepted, blocked
+  addedAt DateTime @default(now())
+
+  // Relations
+  user     User   @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  friend   User   @relation("FriendOfUser", fields: [friendId], references: [id], onDelete: Cascade)
+  friendId String
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+model UserCompletedSet {
+  id          String   @id @default(cuid())
+  completedAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  set    Set    @relation(fields: [setId], references: [id])
+  setId  String
+
+  @@unique([userId, setId])
+  @@map("user_completed_sets")
+}
+
+model UserFavoriteCharacter {
+  id      String   @id @default(cuid())
+  addedAt DateTime @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  character   Character @relation(fields: [characterId], references: [id])
+  characterId String
+
+  @@unique([userId, characterId])
+  @@map("user_favorite_characters")
+}

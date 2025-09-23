@@ -1,0 +1,29 @@
+# Development Dockerfile
+FROM node:18-alpine
+
+# Install development tools
+RUN apk add --no-cache git curl
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Copy Prisma schema
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+# Expose ports
+EXPOSE 3000 9229
+
+# Start the application in development mode with debugging
+CMD ["npm", "run", "dev"]
