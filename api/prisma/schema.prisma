@@ -259,7 +259,6 @@ model Character {
   userCards          UserCard[]
   deckCards          DeckCard[]
   favoriteByUsers    UserFavoriteCharacter[]
-  TradeCard          TradeCard[]
 
   @@map("characters")
 }
@@ -309,10 +308,11 @@ model UserCard {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
-  character   Character @relation(fields: [characterId], references: [id])
+  character   Character   @relation(fields: [characterId], references: [id])
   characterId String
+  tradeCards  TradeCard[]
 
   @@unique([userId, characterId])
   @@map("user_cards")
@@ -538,27 +538,25 @@ model Trade {
   updatedAt DateTime @updatedAt
 
   // Relations
-  initiator      User        @relation("TradeInitiator", fields: [initiatorId], references: [id])
-  initiatorId    String
-  recipient      User        @relation("TradeRecipient", fields: [recipientId], references: [id])
-  recipientId    String
-  initiatorCards TradeCard[] @relation("InitiatorTradeCards")
-  recipientCards TradeCard[] @relation("RecipientTradeCards")
+  initiator   User        @relation("TradeInitiator", fields: [initiatorId], references: [id])
+  initiatorId String
+  recipient   User        @relation("TradeRecipient", fields: [recipientId], references: [id])
+  recipientId String
+  tradeCards  TradeCard[]
 
   @@map("trades")
 }
 
 model TradeCard {
-  id              String  @id @default(cuid())
-  quantity        Int
-  isInitiatorCard Boolean
+  id        String  @id @default(cuid())
+  quantity  Int
+  isOffered Boolean // true if offered by sender, false if requested from receiver
 
   // Relations
-  trade          Trade     @relation("InitiatorTradeCards", fields: [tradeId], references: [id], onDelete: Cascade)
-  tradeRecipient Trade?    @relation("RecipientTradeCards", fields: [tradeId], references: [id], onDelete: Cascade)
-  tradeId        String
-  character      Character @relation(fields: [characterId], references: [id])
-  characterId    String
+  trade      Trade    @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  tradeId    String
+  userCard   UserCard @relation(fields: [userCardId], references: [id])
+  userCardId String
 
   @@map("trade_cards")
 }
