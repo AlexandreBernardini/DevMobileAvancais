@@ -98,11 +98,15 @@ const swaggerOptions = {
             },
         ],
     },
-    apis: ["/app/routes/*.js", "/app/controllers/*.js"],
+    apis: ["/app/routes/*.js", "/app/controllers/*.js", "/app/models/*.js"],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+app.get("/api-docs.json", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(specs);
+});
 
 // Health check
 app.get("/health", (req, res) => {
