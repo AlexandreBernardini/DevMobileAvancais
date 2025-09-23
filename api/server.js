@@ -102,11 +102,28 @@ const swaggerOptions = {
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+
+// Debug: Log the specs to see if they're being generated
+console.log('Swagger specs generated:', Object.keys(specs));
+console.log('Number of paths found:', Object.keys(specs.paths || {}).length);
+
+// Swagger UI options
+const swaggerUiOptions = {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "TCG Mobile API Documentation",
+    swaggerOptions: {
+        url: '/api-docs.json',
+    }
+};
+
 app.get("/api-docs.json", (req, res) => {
     res.setHeader("Content-Type", "application/json");
     res.send(specs);
 });
+
+app.use("/api-docs", swaggerUi.serve);
+app.get("/api-docs", swaggerUi.setup(specs, { explorer: true }));
 
 // Health check
 app.get("/health", (req, res) => {
