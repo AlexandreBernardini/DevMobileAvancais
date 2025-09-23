@@ -33,10 +33,6 @@ router.get("/", authenticate, boostersController.getUserBoosters);
  *       200:
  *         description: Booster pack purchased successfully
  */
-router.post(
-    "/:id/purchase",
-    authenticate,
-    boostersController.purchaseBoosters
-);
+router.post("/:id/purchase", authenticate, boostersController.purchaseBoosters);
 
 module.exports = router;
