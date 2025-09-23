@@ -122,10 +122,14 @@ app.get("/api-docs.json", (req, res) => {
 });
 
 // Use built-in Swagger UI middleware
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs, {
-    explorer: true,
-    customSiteTitle: "TCG Mobile API Documentation"
-}));
+app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(specs, {
+        explorer: true,
+        customSiteTitle: "TCG Mobile API Documentation",
+    })
+);
 
 // Health check
 app.get("/health", (req, res) => {
