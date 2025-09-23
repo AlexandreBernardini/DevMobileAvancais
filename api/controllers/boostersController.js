@@ -307,19 +307,24 @@ const purchaseBoosters = async (req, res, next) => {
 };
 
 /**
- * Get user's booster packs
+ * Get available booster packs for purchase
  */
 const getUserBoosters = async (req, res, next) => {
     try {
-        const { page = 1, limit = 20, setId, isOpened } = req.query;
+        const { page = 1, limit = 20, setId } = req.query;
 
-        const userId = req.user.id;
         const offset = (parseInt(page) - 1) * parseInt(limit);
 
-        const where = { ownerId: userId };
+        const where = { 
+            isActive: true,
+            availableFrom: { lte: new Date() },
+            OR: [
+                { availableUntil: null },
+                { availableUntil: { gte: new Date() } }
+            ]
+        };
 
         if (setId) where.setId = setId;
-        if (isOpened !== undefined) where.isOpened = isOpened === "true";
 
         const [boosterPacks, total] = await Promise.all([
             prisma.boosterPack.findMany({
