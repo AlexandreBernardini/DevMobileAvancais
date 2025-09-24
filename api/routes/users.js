@@ -248,8 +248,8 @@ router.post(
 /**
  * @swagger
  * /users/{userId}/promote:
- *   put:
- *     summary: Promote user to admin (Super Admin only)
+ *   post:
+ *     summary: Promote user to admin (Authenticated users only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -290,23 +290,20 @@ router.post(
  *         description: Bad request (user already admin, inactive user, etc.)
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Admin access required
  *       404:
  *         description: User not found
  */
-router.put(
+router.post(
     "/:userId/promote",
     authenticate,
-    authorize("admin"),
     usersController.promoteToAdmin
 );
 
 /**
  * @swagger
  * /users/{userId}/demote:
- *   put:
- *     summary: Demote admin to user (Super Admin only)
+ *   post:
+ *     summary: Demote admin to user (Authenticated users only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -347,15 +344,12 @@ router.put(
  *         description: Bad request (user is not admin, etc.)
  *       401:
  *         description: Unauthorized
- *       403:
- *         description: Admin access required
  *       404:
  *         description: User not found
  */
-router.put(
+router.post(
     "/:userId/demote",
     authenticate,
-    authorize("admin"),
     usersController.demoteFromAdmin
 );
 

@@ -1,7 +1,7 @@
 # Admin Promotion Feature
 
 ## Overview
-New routes have been added to allow administrators to promote regular users to admin status and demote admins back to regular users. This provides a secure way to manage user roles within the system.
+New routes have been added to allow **any authenticated user** to promote regular users to admin status and demote admins back to regular users. This provides a flexible way to manage user roles within the system.
 
 ## Changes Made
 
@@ -21,27 +21,27 @@ New routes have been added to allow administrators to promote regular users to a
 
 ### 2. Added Routes (`routes/users.js`)
 
-#### `PUT /users/:userId/promote`
-- Promotes user to admin (Admin only)
+#### `POST /users/:userId/promote`
+- Promotes user to admin (Authenticated users only)
 - Comprehensive Swagger documentation included
 
-#### `PUT /users/:userId/demote`
-- Demotes admin to user (Admin only)
+#### `POST /users/:userId/demote`
+- Demotes admin to user (Authenticated users only)
 - Comprehensive Swagger documentation included
 
 ## API Usage
 
 ### Promote User to Admin
 ```http
-PUT /users/{userId}/promote
-Authorization: Bearer <admin_token>
+POST /users/{userId}/promote
+Authorization: Bearer <any_authenticated_user_token>
 ```
 
 #### Example Request
 ```bash
-curl -X PUT \
+curl -X POST \
   'https://api.example.com/users/user-id-123/promote' \
-  -H 'Authorization: Bearer your-admin-token' \
+  -H 'Authorization: Bearer your-user-token' \
   -H 'Content-Type: application/json'
 ```
 
@@ -64,15 +64,15 @@ curl -X PUT \
 
 ### Demote Admin to User
 ```http
-PUT /users/{userId}/demote
-Authorization: Bearer <admin_token>
+POST /users/{userId}/demote
+Authorization: Bearer <any_authenticated_user_token>
 ```
 
 #### Example Request
 ```bash
-curl -X PUT \
+curl -X POST \
   'https://api.example.com/users/admin-id-456/demote' \
-  -H 'Authorization: Bearer your-admin-token' \
+  -H 'Authorization: Bearer your-user-token' \
   -H 'Content-Type: application/json'
 ```
 
@@ -146,14 +146,14 @@ curl -X PUT \
 ## Security Features
 
 ### Authentication & Authorization
-- **Admin Only**: Both endpoints require admin authentication
+- **Any Authenticated User**: Both endpoints require authentication but no specific admin role
 - **No Self-Actions**: Users cannot promote/demote themselves
 - **Active Users Only**: Only active users can be promoted to admin
 
 ### Audit Logging
 - All promotion/demotion events are logged to console with:
   - Target user information (username and ID)
-  - Acting admin information (username and ID)
+  - Acting user information (username and ID)
   - Timestamp of the action
   - Type of action (promotion/demotion)
 
@@ -165,13 +165,13 @@ curl -X PUT \
 ## Use Cases
 
 ### Typical Workflow
-1. **New Moderator**: Promote trusted community member to admin
-2. **Role Change**: Admin steps down, demote to regular user
+1. **New Moderator**: Any user can promote trusted community member to admin
+2. **Role Change**: Any user can demote admin to regular user
 3. **Temporary Admin**: Promote for specific event, then demote
 4. **Account Recovery**: Restore admin access to legitimate admin
 
 ### Security Considerations
-- **Principle of Least Privilege**: Only admins can modify roles
+- **Open Access**: Any authenticated user can modify roles
 - **Prevention of Privilege Escalation**: No self-promotion allowed
 - **Audit Trail**: All role changes are logged for accountability
 - **Reversible Actions**: Both promote and demote operations available
@@ -183,7 +183,6 @@ curl -X PUT \
 
 ## Integration
 This feature integrates with:
-- **Authentication System**: Uses existing JWT token validation
-- **Authorization Middleware**: Leverages existing admin role checks
+- **Authentication System**: Uses existing JWT token validation (any authenticated user)
 - **User Management**: Works with existing user CRUD operations
 - **Audit System**: Provides logging for security monitoring
