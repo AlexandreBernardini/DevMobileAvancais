@@ -19,6 +19,8 @@ export const Input = ({
                         error,
                         secureTextEntry = false,
                         keyboardType = "default",
+                        onSubmitEditing,
+                        returnKeyType,
                         ...props
                       }: InputProps) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -40,6 +42,8 @@ export const Input = ({
             keyboardType={keyboardType}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            onSubmitEditing={onSubmitEditing}
+            returnKeyType={returnKeyType}
             {...props}
         />
         {error && <Text style={styles.errorText}>{error}</Text>}
