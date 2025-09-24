@@ -245,4 +245,118 @@ router.post(
     usersController.acceptFriendRequest
 );
 
+/**
+ * @swagger
+ * /users/{userId}/promote:
+ *   put:
+ *     summary: Promote user to admin (Super Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the user to promote
+ *     responses:
+ *       200:
+ *         description: User promoted to admin successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     displayName:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [admin]
+ *       400:
+ *         description: Bad request (user already admin, inactive user, etc.)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: User not found
+ */
+router.put(
+    "/:userId/promote",
+    authenticate,
+    authorize("admin"),
+    usersController.promoteToAdmin
+);
+
+/**
+ * @swagger
+ * /users/{userId}/demote:
+ *   put:
+ *     summary: Demote admin to user (Super Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the admin user to demote
+ *     responses:
+ *       200:
+ *         description: Admin demoted to user successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     username:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     displayName:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: [user]
+ *       400:
+ *         description: Bad request (user is not admin, etc.)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Admin access required
+ *       404:
+ *         description: User not found
+ */
+router.put(
+    "/:userId/demote",
+    authenticate,
+    authorize("admin"),
+    usersController.demoteFromAdmin
+);
+
 module.exports = router;

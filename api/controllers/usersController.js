@@ -533,6 +533,171 @@ const acceptFriendRequest = async (req, res, next) => {
     }
 };
 
+/**
+ * Promote user to admin (Super Admin only)
+ */
+const promoteToAdmin = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const currentUserId = req.user.id;
+
+        // Check if the current user is trying to promote themselves
+        if (userId === currentUserId) {
+            return res.status(400).json({
+                success: false,
+                error: "You cannot promote yourself to admin",
+            });
+        }
+
+        // Check if the target user exists and is active
+        const targetUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                displayName: true,
+                role: true,
+                isActive: true,
+            },
+        });
+
+        if (!targetUser) {
+            return res.status(404).json({
+                success: false,
+                error: "User not found",
+            });
+        }
+
+        if (!targetUser.isActive) {
+            return res.status(400).json({
+                success: false,
+                error: "Cannot promote inactive user to admin",
+            });
+        }
+
+        if (targetUser.role === "admin") {
+            return res.status(400).json({
+                success: false,
+                error: "User is already an admin",
+            });
+        }
+
+        // Promote the user to admin
+        const promotedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                role: "admin",
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                displayName: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        // Log the promotion for security/audit purposes
+        console.log(
+            `User ${targetUser.username} (${
+                targetUser.id
+            }) was promoted to admin by ${req.user.username} (${
+                req.user.id
+            }) at ${new Date().toISOString()}`
+        );
+
+        res.json({
+            success: true,
+            message: `User ${targetUser.username} has been successfully promoted to admin`,
+            data: promotedUser,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Demote admin to user (Super Admin only)
+ */
+const demoteFromAdmin = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const currentUserId = req.user.id;
+
+        // Check if the current user is trying to demote themselves
+        if (userId === currentUserId) {
+            return res.status(400).json({
+                success: false,
+                error: "You cannot demote yourself from admin",
+            });
+        }
+
+        // Check if the target user exists and is active
+        const targetUser = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                displayName: true,
+                role: true,
+                isActive: true,
+            },
+        });
+
+        if (!targetUser) {
+            return res.status(404).json({
+                success: false,
+                error: "User not found",
+            });
+        }
+
+        if (targetUser.role !== "admin") {
+            return res.status(400).json({
+                success: false,
+                error: "User is not an admin",
+            });
+        }
+
+        // Demote the admin to user
+        const demotedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                role: "user",
+            },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                displayName: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        // Log the demotion for security/audit purposes
+        console.log(
+            `Admin ${targetUser.username} (${
+                targetUser.id
+            }) was demoted to user by ${req.user.username} (${
+                req.user.id
+            }) at ${new Date().toISOString()}`
+        );
+
+        res.json({
+            success: true,
+            message: `Admin ${targetUser.username} has been demoted to regular user`,
+            data: demotedUser,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     updateProfile,
     getUserCollection,
@@ -543,4 +708,6 @@ module.exports = {
     getFriends,
     sendFriendRequest,
     acceptFriendRequest,
+    promoteToAdmin,
+    demoteFromAdmin,
 };
