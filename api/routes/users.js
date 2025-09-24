@@ -10,6 +10,47 @@ const { validate, updateProfileSchema } = require("../middleware/validation");
 
 /**
  * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of users per page
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [user, admin, moderator]
+ *         description: Filter by user role
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *     responses:
+ *       200:
+ *         description: List of users retrieved successfully
+ *       403:
+ *         description: Unauthorized access
+ */
+router.get("/", authenticate, authorize("admin"), usersController.getAllUsers);
+
+/**
+ * @swagger
  * /users/profile:
  *   put:
  *     summary: Update user profile
@@ -293,11 +334,7 @@ router.post(
  *       404:
  *         description: User not found
  */
-router.post(
-    "/:userId/promote",
-    authenticate,
-    usersController.promoteToAdmin
-);
+router.put("/:userId/promote", authenticate, usersController.promoteToAdmin);
 
 /**
  * @swagger
@@ -347,10 +384,6 @@ router.post(
  *       404:
  *         description: User not found
  */
-router.post(
-    "/:userId/demote",
-    authenticate,
-    usersController.demoteFromAdmin
-);
+router.put("/:userId/demote", authenticate, usersController.demoteFromAdmin);
 
 module.exports = router;

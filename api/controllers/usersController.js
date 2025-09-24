@@ -1,6 +1,75 @@
 const prisma = require("../config/database");
 
 /**
+ * Get all users (Admin only)
+ */
+const getAllUsers = async (req, res, next) => {
+    try {
+        const { page = 1, limit = 20, role, isActive } = req.query;
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        // Build where clause based on query parameters
+        const where = {};
+        if (role) {
+            where.role = role;
+        }
+        if (isActive !== undefined) {
+            where.isActive = isActive === "true";
+        }
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                select: {
+                    id: true,
+                    username: true,
+                    email: true,
+                    displayName: true,
+                    avatar: true,
+                    role: true,
+                    isActive: true,
+                    level: true,
+                    experience: true,
+                    totalCards: true,
+                    uniqueCards: true,
+                    wins: true,
+                    losses: true,
+                    winRate: true,
+                    ranking: true,
+                    league: true,
+                    lastLogin: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    _count: {
+                        select: {
+                            decks: true,
+                            friends: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+                skip: offset,
+                take: parseInt(limit),
+            }),
+            prisma.user.count({ where }),
+        ]);
+
+        res.json({
+            success: true,
+            data: users,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / parseInt(limit)),
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * Update user profile
  */
 const updateProfile = async (req, res, next) => {
@@ -699,6 +768,7 @@ const demoteFromAdmin = async (req, res, next) => {
 };
 
 module.exports = {
+    getAllUsers,
     updateProfile,
     getUserCollection,
     getUserDecks,
