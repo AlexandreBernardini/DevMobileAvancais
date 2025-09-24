@@ -86,6 +86,19 @@ const createCharacterSchema = Joi.object({
     evolutionFromId: Joi.string().optional(),
     evolutionLevel: Joi.number().integer().min(1).optional(),
     tags: Joi.array().items(Joi.string()).optional(),
+    userId: Joi.string().optional(), // Optional: if provided, add card to this user's collection
+    addToMyCollection: Joi.boolean().optional(), // Optional: if true, add card to authenticated user's collection
+    obtainedFrom: Joi.string()
+        .valid(
+            "Booster",
+            "Trade",
+            "Reward",
+            "Purchase",
+            "Event",
+            "Starter",
+            "Admin"
+        )
+        .optional(), // How the card was obtained
     abilities: Joi.array()
         .items(
             Joi.object({

@@ -14,7 +14,7 @@ const UserCardSchema = new mongoose.Schema(
         },
         quantity: {
             type: Number,
-            required: true,
+            // required: true,
             min: 1,
             default: 1,
         },
@@ -56,7 +56,7 @@ const UserCardSchema = new mongoose.Schema(
                 "Event",
                 "Starter",
             ],
-            required: true,
+            default: "Booster",
         },
         obtainedAt: {
             type: Date,

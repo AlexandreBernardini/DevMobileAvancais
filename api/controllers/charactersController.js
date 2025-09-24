@@ -168,36 +168,134 @@ const createCharacter = async (req, res, next) => {
         const {
             abilities = [],
             evolutionMaterials = [],
+            userId, // Optional: if provided, add card to this user's collection
+            obtainedFrom = "Admin", // How the card was obtained
+            addToMyCollection = false, // Optional: if true, add card to authenticated user's collection
             ...characterData
         } = req.body;
 
-        const character = await prisma.character.create({
-            data: {
-                ...characterData,
-                abilities: {
-                    create: abilities,
-                },
-                evolutionMaterials: {
-                    create: evolutionMaterials,
-                },
-            },
-            include: {
-                set: {
-                    select: {
-                        id: true,
-                        name: true,
-                        code: true,
+        // Determine which user should receive the card
+        let targetUserId = userId;
+        if (!userId && addToMyCollection && req.user) {
+            targetUserId = req.user.id;
+        }
+
+        const result = await prisma.$transaction(async (tx) => {
+            // Create the character
+            const character = await tx.character.create({
+                data: {
+                    ...characterData,
+                    abilities: {
+                        create: abilities,
+                    },
+                    evolutionMaterials: {
+                        create: evolutionMaterials,
                     },
                 },
-                abilities: true,
-                evolutionMaterials: true,
-            },
+                include: {
+                    set: {
+                        select: {
+                            id: true,
+                            name: true,
+                            code: true,
+                        },
+                    },
+                    abilities: true,
+                    evolutionMaterials: true,
+                },
+            });
+
+            let userCard = null;
+
+            // If targetUserId is determined, add the character to user's collection
+            if (targetUserId) {
+                // Verify user exists
+                const user = await tx.user.findUnique({
+                    where: { id: targetUserId },
+                });
+
+                if (!user) {
+                    throw new Error(`User with id ${targetUserId} not found`);
+                }
+
+                // Check if user already has this character
+                const existingUserCard = await tx.userCard.findUnique({
+                    where: {
+                        userId_characterId: {
+                            userId: targetUserId,
+                            characterId: character.id,
+                        },
+                    },
+                });
+
+                if (existingUserCard) {
+                    // If user already has this character, increment quantity
+                    userCard = await tx.userCard.update({
+                        where: { id: existingUserCard.id },
+                        data: {
+                            quantity: { increment: 1 },
+                        },
+                        include: {
+                            character: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    rarity: true,
+                                },
+                            },
+                        },
+                    });
+                } else {
+                    // Create new user card
+                    userCard = await tx.userCard.create({
+                        data: {
+                            userId: targetUserId,
+                            characterId: character.id,
+                            quantity: 1,
+                            obtainedFrom: obtainedFrom,
+                        },
+                        include: {
+                            character: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    rarity: true,
+                                },
+                            },
+                        },
+                    });
+                }
+
+                // Update user collection stats
+                await tx.user.update({
+                    where: { id: targetUserId },
+                    data: {
+                        totalCards: { increment: 1 },
+                        uniqueCards: existingUserCard
+                            ? undefined
+                            : { increment: 1 },
+                    },
+                });
+            }
+
+            return { character, userCard };
         });
+
+        let message = "Character created successfully";
+        if (targetUserId) {
+            message =
+                targetUserId === req.user?.id
+                    ? "Character created and added to your collection successfully"
+                    : "Character created and added to user collection successfully";
+        }
 
         res.status(201).json({
             success: true,
-            message: "Character created successfully",
-            data: character,
+            message,
+            data: {
+                character: result.character,
+                userCard: result.userCard,
+            },
         });
     } catch (error) {
         next(error);
