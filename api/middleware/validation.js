@@ -165,14 +165,25 @@ const createDeckSchema = Joi.object({
 // Booster validation schemas
 const createBoosterSchema = Joi.object({
     packId: Joi.string().required(),
-    packType: Joi.string().valid("Standard", "Premium", "Legendary", "Special").optional(),
+    packType: Joi.string()
+        .valid("Standard", "Premium", "Legendary", "Special")
+        .optional(),
     priceCoins: Joi.number().integer().min(0).required(),
     priceGems: Joi.number().integer().min(0).optional(),
     cardsCount: Joi.number().integer().min(1).max(20).optional(),
     foilChance: Joi.number().min(0).max(100).optional(),
     bonusCardChance: Joi.number().min(0).max(100).optional(),
     guaranteedElement: Joi.string()
-        .valid("Fire", "Water", "Earth", "Air", "Lightning", "Dark", "Light", "Neutral")
+        .valid(
+            "Fire",
+            "Water",
+            "Earth",
+            "Air",
+            "Lightning",
+            "Dark",
+            "Light",
+            "Neutral"
+        )
         .optional(),
     packImage: Joi.string().uri().required(),
     openingAnimation: Joi.string().uri().optional(),
@@ -186,7 +197,14 @@ const createBoosterSchema = Joi.object({
         .items(
             Joi.object({
                 rarity: Joi.string()
-                    .valid("Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic")
+                    .valid(
+                        "Common",
+                        "Uncommon",
+                        "Rare",
+                        "Epic",
+                        "Legendary",
+                        "Mythic"
+                    )
                     .required(),
                 quantity: Joi.number().integer().min(1).required(),
             })
@@ -317,6 +335,7 @@ module.exports = {
     refreshTokenSchema,
     updateProfileSchema,
     createCharacterSchema,
+    createBoosterSchema,
     createDeckSchema,
     createGameSchema,
     createTournamentSchema,

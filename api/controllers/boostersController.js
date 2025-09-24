@@ -51,8 +51,12 @@ const createBooster = async (req, res, next) => {
                     isActive,
                     isLimited,
                     limitedQuantity,
-                    availableFrom: availableFrom ? new Date(availableFrom) : new Date(),
-                    availableUntil: availableUntil ? new Date(availableUntil) : null,
+                    availableFrom: availableFrom
+                        ? new Date(availableFrom)
+                        : new Date(),
+                    availableUntil: availableUntil
+                        ? new Date(availableUntil)
+                        : null,
                     setId,
                     guaranteedRarities: {
                         create: guaranteedRarities,
@@ -418,7 +422,7 @@ const getUserBoosters = async (req, res, next) => {
                             id: true,
                             name: true,
                             description: true,
-                            setIcon: true,        // Using setIcon instead of imageUrl
+                            setIcon: true, // Using setIcon instead of imageUrl
                             releaseDate: true,
                             code: true,
                             theme: true,
