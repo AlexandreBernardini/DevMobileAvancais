@@ -8,17 +8,15 @@ interface SearchBarProps {
     onSearch: (value: string) => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Search...', onSearch }) => {
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        onSearch(event.target.value);
+export const SearchBar: React.FC<SearchBarProps> = ({ placeholder = 'Search...', onSearch }) => {
+    const handleInputChange = (text: string) => {
+        onSearch(text);
     };
 
     return (
         <View style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Input placeholder={placeholder} onChange={handleInputChange}></Input>
+            <Input placeholder={placeholder} onChangeText={handleInputChange}></Input>
             <Icons.SearchIcon />
         </View>
     );
 };
-
-export default SearchBar;
