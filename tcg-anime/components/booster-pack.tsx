@@ -8,13 +8,14 @@ import {
     Dimensions,
     ImageBackground,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
 
 interface BoosterPackProps {
     packType?: 'rare' | 'epic' | 'legendary';
     title?: string;
-    backgroundImage?: any; // Pour l'image de fond
+    backgroundImage?: any;
     onOpenPack?: () => void;
 }
 
@@ -27,6 +28,10 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
     const [scaleAnim] = useState(new Animated.Value(1));
     const [rotateAnim] = useState(new Animated.Value(0));
     const [glowAnim] = useState(new Animated.Value(0));
+    const [flashAnim] = useState(new Animated.Value(0));
+    const [raysAnim] = useState(new Animated.Value(0));
+    const [bloomAnim] = useState(new Animated.Value(0));
+    const [isOpening, setIsOpening] = useState(false);
 
     const packColors = {
         rare: '#4A90E2',
@@ -41,7 +46,6 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
     };
 
     React.useEffect(() => {
-        // Animation de lueur continue
         const glowLoop = Animated.loop(
             Animated.sequence([
                 Animated.timing(glowAnim, {
@@ -91,9 +95,20 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
         ]).start();
     };
 
-    const handlePress = () => {
-        // Animation de secousse avant ouverture
+    const handlePress = async () => {
+        if (isOpening) return;
+
+        setIsOpening(true);
+
+        // 4 vibrations rapides
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 100);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), 200);
+        setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 300);
+
+        // Animation d'ouverture avec effet lumineux
         Animated.sequence([
+            // Secousse initiale
             Animated.timing(rotateAnim, {
                 toValue: 0.5,
                 duration: 50,
@@ -113,9 +128,58 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                 toValue: 0,
                 duration: 50,
                 useNativeDriver: true,
-            })
+            }),
+            // Effet lumineux éclatant
+            Animated.parallel([
+                // Flash intense
+                Animated.sequence([
+                    Animated.timing(flashAnim, {
+                        toValue: 1,
+                        duration: 200,
+                        useNativeDriver: false,
+                    }),
+                    Animated.timing(flashAnim, {
+                        toValue: 0,
+                        duration: 600,
+                        useNativeDriver: false,
+                    })
+                ]),
+                // Rayons qui se déploient
+                Animated.timing(raysAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                }),
+                // Bloom/glow qui s'étend
+                Animated.sequence([
+                    Animated.timing(bloomAnim, {
+                        toValue: 1,
+                        duration: 400,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(bloomAnim, {
+                        toValue: 0,
+                        duration: 400,
+                        useNativeDriver: true,
+                    })
+                ]),
+                // Scale up léger
+                Animated.timing(scaleAnim, {
+                    toValue: 1.1,
+                    duration: 800,
+                    useNativeDriver: true,
+                })
+            ])
         ]).start(() => {
             onOpenPack?.();
+            // Reset après animation
+            setTimeout(() => {
+                setIsOpening(false);
+                flashAnim.setValue(0);
+                raysAnim.setValue(0);
+                bloomAnim.setValue(0);
+                scaleAnim.setValue(1);
+            }, 500);
         });
     };
 
@@ -127,6 +191,39 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
     const glowOpacity = glowAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0.3, 0.8],
+    });
+
+    // Effet flash blanc éclatant
+    const flashOpacity = flashAnim.interpolate({
+        inputRange: [0, 0.3, 1],
+        outputRange: [0, 1, 0],
+    });
+
+    // Rayons qui tournent et s'étendent
+    const raysRotate = raysAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0deg', '360deg'],
+    });
+
+    const raysScale = raysAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 1.5],
+    });
+
+    const raysOpacity = raysAnim.interpolate({
+        inputRange: [0, 0.3, 0.7, 1],
+        outputRange: [0, 1, 0.8, 0],
+    });
+
+    // Bloom/glow expansif
+    const bloomScale = bloomAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 2],
+    });
+
+    const bloomOpacity = bloomAnim.interpolate({
+        inputRange: [0, 0.5, 1],
+        outputRange: [0, 0.6, 0],
     });
 
     return (
@@ -142,7 +239,7 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                     }
                 ]}
             >
-                {/* Effet de lueur */}
+                {/* Effet de lueur de base */}
                 <Animated.View
                     style={[
                         styles.glowEffect,
@@ -153,24 +250,55 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                     ]}
                 />
 
-                <TouchableOpacity
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    onPress={handlePress}
-                    activeOpacity={0.9}
-                    style={styles.packTouchable}
+                {/* Bloom expansif lors de l'ouverture */}
+                <Animated.View
+                    style={[
+                        styles.bloomEffect,
+                        {
+                            backgroundColor: packGlow[packType],
+                            opacity: bloomOpacity,
+                            transform: [{ scale: bloomScale }]
+                        }
+                    ]}
+                />
+
+                {/* Rayons lumineux */}
+                <Animated.View
+                    style={[
+                        styles.raysContainer,
+                        {
+                            opacity: raysOpacity,
+                            transform: [
+                                { scale: raysScale },
+                                { rotate: raysRotate }
+                            ]
+                        }
+                    ]}
                 >
+                    {[...Array(8)].map((_, index) => (
+                        <View
+                            key={index}
+                            style={[
+                                styles.ray,
+                                {
+                                    backgroundColor: packGlow[packType],
+                                    transform: [{ rotate: `${index * 45}deg` }]
+                                }
+                            ]}
+                        />
+                    ))}
+                </Animated.View>
+
+                <View style={styles.packTouchable}>
                     {backgroundImage ? (
                         <ImageBackground
                             source={backgroundImage}
                             style={styles.packGradient}
-                            resizeMode="contain" // ← Changé pour voir l'image complète
-                            imageStyle={styles.backgroundImageStyle} // ← Style pour l'image
+                            resizeMode="contain"
+                            imageStyle={styles.backgroundImageStyle}
                         >
-                            {/* Overlay semi-transparent pour garder la lisibilité */}
                             <View style={styles.imageOverlay} />
 
-                            {/* Motif décoratif */}
                             <View style={styles.decorativePattern}>
                                 {[...Array(12)].map((_, index) => (
                                     <View
@@ -186,7 +314,6 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                 ))}
                             </View>
 
-                            {/* Contenu du pack */}
                             <View style={styles.packContent}>
                                 <Text style={styles.packTitle}>{title}</Text>
                                 <Text style={styles.packSubtitle}>{packType.toUpperCase()}</Text>
@@ -195,7 +322,6 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                     <Text style={styles.cardCountText}>5 CARDS</Text>
                                 </View>
 
-                                {/* Indicateur de rareté */}
                                 <View style={styles.rarityIndicator}>
                                     {[...Array(packType === 'legendary' ? 5 : packType === 'epic' ? 4 : 3)].map((_, index) => (
                                         <View key={index} style={styles.star} />
@@ -203,14 +329,18 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                 </View>
                             </View>
 
-                            {/* Reflet */}
                             <View style={styles.shine} />
+
+                            {/* Flash blanc éclatant */}
+                            <Animated.View
+                                style={[
+                                    styles.flashOverlay,
+                                    { opacity: flashOpacity }
+                                ]}
+                            />
                         </ImageBackground>
                     ) : (
-                        <View
-                            style={[styles.packGradient, { backgroundColor: packColors[packType] }]}
-                        >
-                            {/* Motif décoratif */}
+                        <View style={[styles.packGradient, { backgroundColor: packColors[packType] }]}>
                             <View style={styles.decorativePattern}>
                                 {[...Array(12)].map((_, index) => (
                                     <View
@@ -226,7 +356,6 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                 ))}
                             </View>
 
-                            {/* Contenu du pack */}
                             <View style={styles.packContent}>
                                 <Text style={styles.packTitle}>{title}</Text>
                                 <Text style={styles.packSubtitle}>{packType.toUpperCase()}</Text>
@@ -235,7 +364,6 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                     <Text style={styles.cardCountText}>5 CARDS</Text>
                                 </View>
 
-                                {/* Indicateur de rareté */}
                                 <View style={styles.rarityIndicator}>
                                     {[...Array(packType === 'legendary' ? 5 : packType === 'epic' ? 4 : 3)].map((_, index) => (
                                         <View key={index} style={styles.star} />
@@ -243,14 +371,35 @@ const BoosterPack: React.FC<BoosterPackProps> = ({
                                 </View>
                             </View>
 
-                            {/* Reflet */}
                             <View style={styles.shine} />
+
+                            {/* Flash blanc éclatant */}
+                            <Animated.View
+                                style={[
+                                    styles.flashOverlay,
+                                    { opacity: flashOpacity }
+                                ]}
+                            />
                         </View>
                     )}
-                </TouchableOpacity>
+                </View>
             </Animated.View>
 
-            <Text style={styles.tapHint}>Tap to open!</Text>
+            <TouchableOpacity
+                style={[
+                    styles.openButton,
+                    {
+                        backgroundColor: packGlow[packType],
+                        opacity: isOpening ? 0.5 : 1
+                    }
+                ]}
+                onPress={handlePress}
+                disabled={isOpening}
+            >
+                <Text style={styles.openButtonText}>
+                    {isOpening ? 'OPENING...' : 'OPEN'}
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -266,16 +415,47 @@ const styles = StyleSheet.create({
     },
     glowEffect: {
         position: 'absolute',
-        width: width * 0.2 + 20,
-        height: width * 0.35 + 20,
+        width: width * 0.8 + 20,
+        height: width * 1.4 + 20,
         borderRadius: 20,
         top: -10,
         left: -10,
         zIndex: 0,
     },
+    bloomEffect: {
+        position: 'absolute',
+        width: width * 0.8 + 60,
+        height: width * 1.4 + 60,
+        borderRadius: 40,
+        top: -30,
+        left: -30,
+        zIndex: 0,
+    },
+    raysContainer: {
+        position: 'absolute',
+        width: width * 0.8 + 100,
+        height: width * 1.4 + 100,
+        top: -50,
+        left: -50,
+        zIndex: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    ray: {
+        position: 'absolute',
+        width: 4,
+        height: width * 0.6,
+        borderRadius: 2,
+        opacity: 0.8,
+        shadowColor: '#fff',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 10,
+        elevation: 5,
+    },
     packTouchable: {
-        width: width * 0.2,
-        height: width * 0.35,
+        width: width * 0.8,
+        height: width * 1.4,
         borderRadius: 15,
         elevation: 10,
         shadowColor: '#76fafa',
@@ -297,7 +477,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.3)', // Overlay semi-transparent
+        backgroundColor: 'rgba(0,0,0,0.3)',
         borderRadius: 15,
     },
     backgroundImageStyle: {
@@ -305,7 +485,6 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
         resizeMode: 'cover',
-        // Tu peux ajouter d'autres styles ici pour positionner l'image
     },
     decorativePattern: {
         position: 'absolute',
@@ -374,11 +553,33 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 15,
     },
-    tapHint: {
+    flashOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'white',
+        borderRadius: 15,
+        zIndex: 2,
+    },
+    openButton: {
         marginTop: 20,
-        color: '#666',
-        fontSize: 16,
-        fontStyle: 'italic',
+        paddingHorizontal: 30,
+        paddingVertical: 12,
+        borderRadius: 25,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+    },
+    openButtonText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        letterSpacing: 1,
     },
 });
 
