@@ -1,6 +1,89 @@
 const prisma = require("../config/database");
 
 /**
+ * Create a new booster pack (Admin only)
+ */
+const createBooster = async (req, res, next) => {
+    try {
+        const {
+            packId,
+            packType = "Standard",
+            priceCoins,
+            priceGems = 0,
+            cardsCount = 5,
+            foilChance = 10.0,
+            bonusCardChance = 5.0,
+            guaranteedElement,
+            packImage,
+            openingAnimation,
+            isActive = true,
+            isLimited = false,
+            limitedQuantity,
+            availableFrom,
+            availableUntil,
+            setId,
+            guaranteedRarities = [],
+        } = req.body;
+
+        const result = await prisma.$transaction(async (tx) => {
+            // Verify the set exists
+            const set = await tx.set.findUnique({
+                where: { id: setId },
+            });
+
+            if (!set) {
+                throw new Error(`Set with id ${setId} not found`);
+            }
+
+            // Create the booster pack
+            const boosterPack = await tx.boosterPack.create({
+                data: {
+                    packId,
+                    packType,
+                    priceCoins,
+                    priceGems,
+                    cardsCount,
+                    foilChance,
+                    bonusCardChance,
+                    guaranteedElement,
+                    packImage,
+                    openingAnimation,
+                    isActive,
+                    isLimited,
+                    limitedQuantity,
+                    availableFrom: availableFrom ? new Date(availableFrom) : new Date(),
+                    availableUntil: availableUntil ? new Date(availableUntil) : null,
+                    setId,
+                    guaranteedRarities: {
+                        create: guaranteedRarities,
+                    },
+                },
+                include: {
+                    set: {
+                        select: {
+                            id: true,
+                            name: true,
+                            code: true,
+                        },
+                    },
+                    guaranteedRarities: true,
+                },
+            });
+
+            return boosterPack;
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Booster pack created successfully",
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * Open a booster pack
  */
 const openBooster = async (req, res, next) => {
@@ -475,6 +558,7 @@ const getBoosterContents = async (req, res, next) => {
 };
 
 module.exports = {
+    createBooster,
     openBooster,
     purchaseBoosters,
     getUserBoosters,

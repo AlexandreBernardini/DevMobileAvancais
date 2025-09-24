@@ -162,6 +162,38 @@ const createDeckSchema = Joi.object({
         .required(),
 });
 
+// Booster validation schemas
+const createBoosterSchema = Joi.object({
+    packId: Joi.string().required(),
+    packType: Joi.string().valid("Standard", "Premium", "Legendary", "Special").optional(),
+    priceCoins: Joi.number().integer().min(0).required(),
+    priceGems: Joi.number().integer().min(0).optional(),
+    cardsCount: Joi.number().integer().min(1).max(20).optional(),
+    foilChance: Joi.number().min(0).max(100).optional(),
+    bonusCardChance: Joi.number().min(0).max(100).optional(),
+    guaranteedElement: Joi.string()
+        .valid("Fire", "Water", "Earth", "Air", "Lightning", "Dark", "Light", "Neutral")
+        .optional(),
+    packImage: Joi.string().uri().required(),
+    openingAnimation: Joi.string().uri().optional(),
+    isActive: Joi.boolean().optional(),
+    isLimited: Joi.boolean().optional(),
+    limitedQuantity: Joi.number().integer().min(1).optional(),
+    availableFrom: Joi.date().optional(),
+    availableUntil: Joi.date().optional(),
+    setId: Joi.string().required(),
+    guaranteedRarities: Joi.array()
+        .items(
+            Joi.object({
+                rarity: Joi.string()
+                    .valid("Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic")
+                    .required(),
+                quantity: Joi.number().integer().min(1).required(),
+            })
+        )
+        .optional(),
+});
+
 // Game validation schemas
 const createGameSchema = Joi.object({
     gameMode: Joi.string()
