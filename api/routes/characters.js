@@ -82,16 +82,13 @@ const { validate, createCharacterSchema } = require("../middleware/validation");
  *             type: string
  *         setId:
  *           type: string
- *         userId:
- *           type: string
- *           description: Optional - if provided, the character will be added to this user's collection
  *         addToMyCollection:
  *           type: boolean
  *           description: Optional - if true, the character will be added to the authenticated user's collection
  *         obtainedFrom:
  *           type: string
  *           enum: [Booster, Trade, Reward, Purchase, Event, Starter, Admin]
- *           description: How the card was obtained (used when userId is provided or addToMyCollection is true)
+ *           description: How the card was obtained (used when addToMyCollection is true)
  *         abilities:
  *           type: array
  *           items:

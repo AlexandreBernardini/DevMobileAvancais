@@ -168,17 +168,13 @@ const createCharacter = async (req, res, next) => {
         const {
             abilities = [],
             evolutionMaterials = [],
-            userId, // Optional: if provided, add card to this user's collection
             obtainedFrom = "Admin", // How the card was obtained
             addToMyCollection = false, // Optional: if true, add card to authenticated user's collection
             ...characterData
         } = req.body;
 
-        // Determine which user should receive the card
-        let targetUserId = userId;
-        if (!userId && addToMyCollection && req.user) {
-            targetUserId = req.user.id;
-        }
+        // Determine if we should add to authenticated user's collection
+        const targetUserId = addToMyCollection && req.user ? req.user.id : null;
 
         const result = await prisma.$transaction(async (tx) => {
             // Create the character
@@ -284,9 +280,7 @@ const createCharacter = async (req, res, next) => {
         let message = "Character created successfully";
         if (targetUserId) {
             message =
-                targetUserId === req.user?.id
-                    ? "Character created and added to your collection successfully"
-                    : "Character created and added to user collection successfully";
+                "Character created and added to your collection successfully";
         }
 
         res.status(201).json({
