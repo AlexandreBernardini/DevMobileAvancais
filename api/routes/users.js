@@ -12,7 +12,7 @@ const { validate, updateProfileSchema } = require("../middleware/validation");
  * @swagger
  * /users:
  *   get:
- *     summary: Get all users (Admin only)
+ *     summary: Get all users
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -44,10 +44,10 @@ const { validate, updateProfileSchema } = require("../middleware/validation");
  *     responses:
  *       200:
  *         description: List of users retrieved successfully
- *       403:
- *         description: Unauthorized access
+ *       401:
+ *         description: Authentication required
  */
-router.get("/", authenticate, authorize("admin"), usersController.getAllUsers);
+router.get("/", authenticate, usersController.getAllUsers);
 
 /**
  * @swagger
